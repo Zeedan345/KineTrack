@@ -13,8 +13,8 @@ struct CameraView: View {
     @StateObject private var model: FrameHandler
     @State private var previewView = VideoPreviewView()
     
-    init(model: FrameHandler) {
-        _model = StateObject(wrappedValue: model)
+    init() {
+        _model = StateObject(wrappedValue: FrameHandler())
     }
     
     @Environment(\.presentationMode) var presentationMode
@@ -55,7 +55,19 @@ struct CameraView: View {
                             .background(Color.black.opacity(0.6))
                             .cornerRadius(4)
                     }
+//                    let or = savedOrientation == nil ? model.orienatation : savedOrientation!
+//                    Text(or.isPortrait ? "Portrait mode" : "Landscape mode")
+//                        .foregroundColor(.white)
+//                        .font(.caption)
+//                        .padding(.vertical, 2)
+//                        .padding(.horizontal, 6)
+//                        .padding(4)
+//                        .background(Color.black.opacity(0.6))
+//                        .cornerRadius(4)
                 }
+                .padding(.top, 25)
+                .padding(.leading, 16)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
                 // Record & controls (bottom)
                 VStack {

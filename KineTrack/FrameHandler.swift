@@ -19,9 +19,9 @@ struct CameraFormatOption: Identifiable, Equatable {
 
     var resolutionLabel: String {
         switch (width, height) {
-        case (3840, 2160): return "4K"
-        case (1920, 1080): return "1080p HD"
-        case (1280, 720):  return "720p HD"
+        case (3840, 2160): return "3840x2160"
+        case (1920, 1080): return "1920x1080"
+        case (1280, 720):  return "1280x720"
         default:            return "\(width)x\(height)"
         }
     }
