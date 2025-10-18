@@ -1,0 +1,197 @@
+//
+//  Utilities.swift
+//  Heart Sensor
+//
+//  Created by Taebi Lab on 6/17/25.
+//
+
+import Foundation
+import FirebaseFirestore
+import Security
+import CryptoKit
+import AVKit
+import FirebaseAuth
+import CoreData
+
+func fetchUserRole(completion: @escaping(String?) -> Void) {
+    guard let user = Auth.auth().currentUser else {
+        print("Not Logged In")
+        return
+    }
+    let uid = user.uid
+    let db = Firestore.firestore()
+    db.collection("users").document(uid).getDocument { document, error in
+        if let data = document?.data(), let role = data["role"] as? String {
+                completion(role)
+            } else {
+                completion(nil)
+            }
+    }
+}
+
+func getOrCreateKey(for role: String) -> SymmetricKey? {
+    //Tag returns an encoding
+    let tag = "MSU.Heart-Sensor.\(role)Key".data(using: .utf8)!
+
+    //Query to check if in Keychain
+    var query: [String: Any] = [
+        kSecClass as String: kSecClassKey,
+        kSecAttrApplicationTag as String: tag,
+        kSecReturnData as String: true
+    ]
+    
+    //if in keychain, get the key
+    var item: CFTypeRef?
+    if SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+       let data = item as? Data {
+        return SymmetricKey(data: data)
+    }
+
+    // Key not found, create and store
+    let newKey = SymmetricKey(size: .bits256)
+    let keyData = newKey.withUnsafeBytes { Data($0) }
+
+    query = [
+        kSecClass as String: kSecClassKey,
+        kSecAttrApplicationTag as String: tag,
+        kSecValueData as String: keyData,
+        kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+    ]
+
+    let status = SecItemAdd(query as CFDictionary, nil)
+    return (status == errSecSuccess) ? newKey : nil
+}
+func formatTime(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.timeStyle = .medium
+    return formatter.string(from: date)
+}
+func extractMetaData(_ url: URL) -> (fileSize: Int64, startTime: Date, duration: Double?, res: CGSize, fps: Float) {
+    var fileSize: Int64 = 0
+    var startTime: Date = Date()
+    var duration: Double?
+    var res: CGSize = .zero
+    var fps: Float = 0
+
+    if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path) {
+        if let size = attrs[.size] as? NSNumber {
+            fileSize = size.int64Value
+        }
+        if let created = attrs[.creationDate] as? Date {
+            startTime = created
+        }
+    }
+
+    let asset = AVAsset(url: url)
+    let seconds = CMTimeGetSeconds(asset.duration)
+    duration = seconds.isFinite ? seconds : nil
+
+    if let track = asset.tracks(withMediaType: .video).first {
+        res = track.naturalSize
+        fps = track.nominalFrameRate
+    }
+
+    return (fileSize, startTime, duration, res, fps)
+}
+func findAvailableCamera(position: AVCaptureDevice.Position) -> AVCaptureDevice? {
+    let discoverySession = AVCaptureDevice.DiscoverySession(
+        deviceTypes: [ .builtInLiDARDepthCamera,.builtInWideAngleCamera, .builtInDualCamera,.builtInDualWideCamera, .builtInTripleCamera, .builtInTelephotoCamera],
+        mediaType: .video,
+        position: position
+        )
+    return discoverySession.devices.first
+}
+func discoverSupportedFormats(position: AVCaptureDevice.Position) -> [CameraFormatOption] {
+    guard let device = findAvailableCamera(position: position) else {
+        print("No Available Camera")
+        return []
+    }
+    var options = [CameraFormatOption]()
+//    let otherFormats = device.formats.filter { !$0.supportedDepthDataFormats.isEmpty }
+//    print(otherFormats)
+    for format in device.formats {
+        let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+        guard dims.width >= 640 else { continue }
+        let rates = format.videoSupportedFrameRateRanges
+            .flatMap { Int($0.minFrameRate)...Int($0.maxFrameRate) }
+        guard !rates.isEmpty else { continue }
+        options.append(CameraFormatOption(
+            format:    format,
+            width:     dims.width,
+            height:    dims.height,
+            frameRates: Array(Set(rates)).sorted()
+        ))
+    }
+    let grouped = Dictionary(grouping: options, by: { $0.resolutionLabel })
+    let unique  = grouped.compactMap {
+        $0.value.max(by: { a,b in (a.frameRates.max() ?? 0) < (b.frameRates.max() ?? 0) })
+    }
+    let sorted = unique.sorted {
+        let isA4K = ($0.width == 3840 && $0.height == 2160)
+        let isB4K = ($1.width == 3840 && $1.height == 2160)
+
+        if isA4K && !isB4K {
+            return true
+        } else if !isA4K && isB4K {
+            return false
+        } else {
+            return $0.width * $0.height > $1.width * $1.height
+        }
+    }
+    return sorted
+}
+
+func asyncFetchUserRole() async -> String? {
+    guard let user = Auth.auth().currentUser else {
+        print("Not Logged In")
+        return nil
+    }
+    let uid = user.uid
+    let db = Firestore.firestore()
+    
+    do {
+        let document = try await db.collection("users").document(uid).getDocument()
+        return document.data()?["role"] as? String
+    } catch {
+        print("Error fetching user role: \(error)")
+        return nil
+    }
+}
+
+func clearUserData(entityName: String) async {
+    let role = await asyncFetchUserRole()
+    let userId = Auth.auth().currentUser?.uid
+    guard role != "admin" else {
+        print("Admin Skipping")
+        return
+    }
+    
+    let context = PersistenceController.shared.container.viewContext
+    let fetchRequest: NSFetchRequest<NSManagedObject> = NSFetchRequest(entityName: entityName)
+    
+    do {
+        let objectsToDelete = try context.fetch(fetchRequest)
+        guard !objectsToDelete.isEmpty else { return }
+        
+        let fileManager = FileManager.default
+        for object in objectsToDelete {
+            if let synced = object.value(forKey: "synced") as? Bool, synced, object.value(forKey: "ownerId") as? String == userId {
+                if let localURL = object.value(forKey: "url") as? URL {
+                    if fileManager.fileExists(atPath: localURL.path) {
+                        try fileManager.removeItem(at: localURL)
+                        print("Deleted file at: \(localURL.path)")
+                    }
+                }
+                context.delete(object)
+            }
+        }
+        try context.save()
+        print("Successfully cleared entity '\(entityName)' and associated files.")
+        
+    } catch {
+        print("Failed to clear entity '\(entityName)': \(error)")
+    }
+}
+func calculateTime(_ time: Date, start: Double) -> Double {
+    return (time.timeIntervalSince1970 - start)
+}
