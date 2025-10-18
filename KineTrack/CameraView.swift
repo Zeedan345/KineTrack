@@ -1,9 +1,3 @@
-//
-//  CameraView.swift
-//
-//  Created by Zeedan Feroz Khan.
-
-
 import SwiftUI
 import AVFoundation
 import CoreGraphics
@@ -26,6 +20,12 @@ struct CameraView: View {
     
     @State private var showVideoPicker: Bool = false
     @State private var selectedVideoURL: URL? = nil
+    
+    // Position-related state
+    @State private var selectedPosition: Position? = nil
+    @State private var isShowingPositionPicker: Bool = false
+    @State private var showErrorAlert: Bool = false
+    @State private var savedOrientation: AVCaptureVideoOrientation? = nil
 
     var body: some View {
         NavigationView {
@@ -55,15 +55,21 @@ struct CameraView: View {
                             .background(Color.black.opacity(0.6))
                             .cornerRadius(4)
                     }
-//                    let or = savedOrientation == nil ? model.orienatation : savedOrientation!
-//                    Text(or.isPortrait ? "Portrait mode" : "Landscape mode")
-//                        .foregroundColor(.white)
-//                        .font(.caption)
-//                        .padding(.vertical, 2)
-//                        .padding(.horizontal, 6)
-//                        .padding(4)
-//                        .background(Color.black.opacity(0.6))
-//                        .cornerRadius(4)
+                    
+                    // Show selected position
+                    if let position = selectedPosition {
+                        HStack(spacing: 4) {
+                            Image(systemName: position.icon)
+                            Text(position.name)
+                        }
+                        .foregroundColor(.white)
+                        .font(.caption)
+                        .padding(.vertical, 2)
+                        .padding(.horizontal, 6)
+                        .padding(4)
+                        .background(Color.blue.opacity(0.7))
+                        .cornerRadius(4)
+                    }
                 }
                 .padding(.top, 25)
                 .padding(.leading, 16)
@@ -73,38 +79,33 @@ struct CameraView: View {
                 VStack {
                     Spacer()
                     ZStack {
-                        if !model.isRecording{
+                        if !model.isRecording {
                             HStack() {
                                 HStack {
                                     Button {
-                                        //TODO: Make this work with choose position
-//                                        if selectedSubject == nil {
-//                                            if subjects.isEmpty { showErrorAlert = true }
-//                                            else {
-//                                                selectedSubject = subjects.first
-//                                                isShowingSubjectPicker = true
-//                                            }
-//                                        } else {
-//                                            showVideoPicker = true
-//                                        }
+                                        if selectedPosition == nil {
+                                            showErrorAlert = true
+                                        } else {
+                                            showVideoPicker = true
+                                        }
                                     } label: {
                                         Image(systemName: "film")
                                             .resizable().frame(width: 26, height: 26)
                                             .foregroundColor(.white)
                                     }
                                     .padding()
+                                    
                                     Button {
-                                        //TODO: Show Positions
-                                        //isShowingSubjectPicker.toggle()
+                                        isShowingPositionPicker.toggle()
                                     } label: {
-                                        Image(systemName: "person.badge.plus.fill")
+                                        Image(systemName: selectedPosition == nil ? "list.bullet.circle" : "list.bullet.circle.fill")
                                             .resizable().frame(width: 26, height: 26)
-                                            .foregroundColor(.white)
+                                            .foregroundColor(selectedPosition == nil ? .white : .blue)
                                     }
                                     .padding()
                                 }
                                 Spacer()
-                                // Offline video picker
+                                
                                 HStack {
                                     Button {
                                         if model.cameraPosition == .back {
@@ -122,6 +123,7 @@ struct CameraView: View {
                                 }
                             }
                         }
+                        
                         // Record/stop button
                         Button {
                             guard isCameraEnabled else { return }
@@ -129,19 +131,13 @@ struct CameraView: View {
                                 model.stopRecording()
                                 stopTimer()
                             } else {
-                                //TODO: Change this no position selected
-//                                if selectedSubject == nil {
-//                                    if subjects.isEmpty {
-//                                        showErrorAlert = true
-//                                    } else {
-//                                        selectedSubject = subjects.first
-//                                        isShowingSubjectPicker = true
-//                                    }
-//                                } else {
-//                                    model.startRecording()
-//                                    savedOrientation = model.orienatation
-//                                    startTimer()
-//                                }
+                                if selectedPosition == nil {
+                                    showErrorAlert = true
+                                } else {
+                                    model.startRecording()
+                                    //savedOrientation = model.orienatation
+                                    startTimer()
+                                }
                             }
                         } label: {
                             Image(systemName: model.isRecording ? "stop.circle.fill" : "record.circle")
@@ -156,6 +152,7 @@ struct CameraView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 25)
                 }
+                
                 if isLoadingVideo {
                     ZStack {
                         Color.black.opacity(0.7)
@@ -173,28 +170,6 @@ struct CameraView: View {
                         }
                     }
                 }
-                // TODO: Navigation to results
-//                NavigationLink(isActive: $isShowingOfflinePredView) {
-//                    if let url = model.videoURL, let subj = selectedSubject {
-//                        OfflinePredictionView(url: url, selectedSubject: subj, warningMessages: model.warningMessages, savedOrientation: savedOrientation)
-//                            .navigationTitle("Offline View")
-//                            .navigationBarBackButtonHidden(true)
-//                            .toolbar {
-//                                ToolbarItem(placement: .navigationBarLeading) {
-//                                    Button(action: {
-//                                        presentationMode.wrappedValue.dismiss()
-//                                        model.videoURL = nil
-//                                    }) {
-//                                        HStack {
-//                                            Image(systemName: "chevron.left")
-//                                            Text("Back")
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                    } else { EmptyView() }
-//                } label: { EmptyView() }
-
             }
             .onAppear {
                 model.setViewContext(viewContext)
@@ -209,34 +184,33 @@ struct CameraView: View {
             .onChange(of: model.selectedFrameRate) { newFrame in
                 model.customApplyFormat()
             }
-            // TODO: Position Picker
-//            .sheet(isPresented: $isShowingSubjectPicker) {
-//                NavigationView {
-//                    Form {
-//                        Picker(selection: $selectedSubject, label: Text("Subjects")) {
-//                            ForEach(subjects, id: \.self) { subject in
-//                                Text(subject.name ?? "Unnamed").tag(subject as SubjectEntity?)
-//                            }
-//                        }
-//                        .pickerStyle(WheelPickerStyle()).labelsHidden()
-//                    }
-//                    .navigationTitle(Text("Select a Subject"))
-//                    .toolbar {
-//                        ToolbarItemGroup(placement: .navigationBarTrailing) {
-//                            Button("Select") {
-//                                if let subj = selectedSubject {
-//                                    model.selectedSubject = subj
-//                                    isShowingSubjectPicker = false
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                .presentationDetents([.medium])
-//            }
+            // Position Picker Sheet
+            .sheet(isPresented: $isShowingPositionPicker) {
+                NavigationView {
+                    PositionPickerView(selectedPosition: $selectedPosition)
+                        .navigationTitle("Select Position")
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") {
+                                    isShowingPositionPicker = false
+                                }
+                            }
+                        }
+                }
+                .presentationDetents([.medium, .large])
+            }
             // Video picker
             .sheet(isPresented: $showVideoPicker) {
                 VideoPicker(videoURL: $selectedVideoURL, isLoading: $isLoadingVideo)
+            }
+            // Error alert
+            .alert("No Position Selected", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) { }
+                Button("Select Position") {
+                    isShowingPositionPicker = true
+                }
+            } message: {
+                Text("Please select a position before recording or uploading a video.")
             }
         }
     }
@@ -247,12 +221,13 @@ struct CameraView: View {
             recordingDuration += 0.1
         }
     }
+    
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
         recordingDuration = 0
     }
-    //covert duration to min, sec, and milli sec
+    
     private func formatDuration(_ duration: TimeInterval) -> String {
         let minutes = Int(duration) / 60
         let seconds = Int(duration.truncatingRemainder(dividingBy: 60))
@@ -260,4 +235,3 @@ struct CameraView: View {
         return String(format: "%02d:%02d.%01d", minutes, seconds, milliseconds)
     }
 }
-

@@ -22,8 +22,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BEBDA82EA41F2B006C981F /* KineTrack */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = KineTrack;
 			sourceTree = "<group>";
 		};
@@ -75,7 +73,6 @@
 				3F0C605AEA6F74806558E00B /* Pods-KineTrack.debug.xcconfig */,
 				E4A1EA962F6E4FE9DA19849A /* Pods-KineTrack.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
