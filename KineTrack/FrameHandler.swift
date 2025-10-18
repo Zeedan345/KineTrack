@@ -9,7 +9,6 @@ import SwiftUI
 import CoreData
 internal import Combine
 
-//struct for camera format's
 struct CameraFormatOption: Identifiable, Equatable {
     let id = UUID()
     let format: AVCaptureDevice.Format
@@ -27,8 +26,8 @@ struct CameraFormatOption: Identifiable, Equatable {
     }
 }
 
-class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate
-{
+class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate {
+    
     // Core session & device I/O
     private var viewContext: NSManagedObjectContext?
     private(set) var captureSession = AVCaptureSession()
@@ -39,18 +38,22 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
     private var movieFileOutput: AVCaptureMovieFileOutput?
     private let ciContext = CIContext()
     private var startTime: Date? = nil
-    var isRecording: Bool = false
+    @Published var isRecording = false
     
-    @Published var resolution         = ""
-    @Published var frameRate          = ""
+    @Published var resolution = ""
+    @Published var frameRate = ""
     @Published var videoURL: URL?
+    
+    // Position tracking
+    @Published var selectedPosition: Position?
+//    @Published var currentRecordingPosition: Position?
     
     // Selected format & FPS state used by UI and configuration
     @Published var supportedFormats: [CameraFormatOption] = []
     @Published var selectedFormat: CameraFormatOption?
     @Published var selectedFPS: Int = 30
 
-    @Published var cameraPosition    : AVCaptureDevice.Position = .back
+    @Published var cameraPosition: AVCaptureDevice.Position = .back
     @AppStorage("selectedResolution") var selectedResolution = 0
     @AppStorage("selectedFrameRate") var selectedFrameRate = 0
 
@@ -59,7 +62,6 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
 
     @Published var orienatation: UIDeviceOrientation = .portrait
 
-    //TODO: Make Choosen Position
     override init() {
         super.init()
         checkPermission()
@@ -69,7 +71,7 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
         self.viewContext = context
     }
 
-    //Permission & Session
+    // Permission & Session
     func checkPermission() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
@@ -96,13 +98,18 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
     // Recording Control
     func startRecording() {
         guard let movieOut = movieFileOutput, !movieOut.isRecording else { return }
-        startTime     = Date()
-        // Now begin recording on whatever lens is currently active
+        
+        startTime = Date()
+        
         let tmpURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("capture_\(UUID().uuidString).mov")
+        
+        DispatchQueue.main.async {
+            self.isRecording = true
+            print("Started recording for position")
+        }
         sessionQueue.async {
             movieOut.startRecording(to: tmpURL, recordingDelegate: self)
-            DispatchQueue.main.async { self.isRecording = true }
         }
     }
 
@@ -110,22 +117,22 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
         guard let movieOut = movieFileOutput, movieOut.isRecording else { return }
         movieOut.stopRecording()
         DispatchQueue.main.async {
-            self.isRecording         = false
-            self.startTime           = nil
+            self.isRecording = false
+            self.startTime = nil
+            print("Stopped recording for position")
         }
     }
 
-    //Setup Formats & Selection
+    // Setup Formats & Selection
     private func setupCaptureSession() {
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .inputPriority
         captureSession.inputs.forEach { captureSession.removeInput($0) }
-        captureSession.outputs.forEach{ captureSession.removeOutput($0) }
+        captureSession.outputs.forEach { captureSession.removeOutput($0) }
 
-        
         guard let device = findAvailableCamera(position: cameraPosition) else {
-                print("Error: Unable to add video input")
-                return
+            print("Error: Unable to add video input")
+            return
         }
         videoDevice = device
         do {
@@ -139,8 +146,7 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
         }
 
         let videoOut = AVCaptureVideoDataOutput()
-        videoOut.setSampleBufferDelegate(self,
-                                         queue: DispatchQueue(label: "sampleBufferQueue"))
+        videoOut.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
         if captureSession.canAddOutput(videoOut) {
             captureSession.addOutput(videoOut)
             videoDataOutput = videoOut
@@ -155,10 +161,10 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
         customApplyFormat()
     }
     
-    //get the settings set and apply those
+    // Get the settings set and apply those
     func customApplyFormat() {
         let sorted = discoverSupportedFormats(position: cameraPosition)
-        if selectedResolution == 0  {
+        if selectedResolution == 0 {
             DispatchQueue.main.async {
                 if let top = sorted.first {
                     self.selectedFormat = top
@@ -167,8 +173,9 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
                     self.selectedFrameRate = self.selectedFPS
                 }
                 self.supportedFormats = sorted
-                self.applyCameraSettings(format: self.selectedFormat!,
-                                         fps:    self.selectedFPS)
+                if let format = self.selectedFormat {
+                    self.applyCameraSettings(format: format, fps: self.selectedFPS)
+                }
             }
         } else {
             let width = self.selectedResolution / 10000
@@ -178,13 +185,37 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
                     self.selectedFormat = selectedOption
                     self.selectedFPS = Int(self.selectedFrameRate)
                     self.supportedFormats = sorted
-                    self.applyCameraSettings(format: self.selectedFormat!,
-                                             fps:    self.selectedFPS)
+                    self.applyCameraSettings(format: selectedOption, fps: self.selectedFPS)
                 }
             }
         }
-        //update the UI
         updateCurrentSettingsOnMain()
+    }
+    
+    // Discover supported formats
+    private func discoverSupportedFormats(position: AVCaptureDevice.Position) -> [CameraFormatOption] {
+        guard let device = findAvailableCamera(position: position) else { return [] }
+        
+        var formatOptions: [CameraFormatOption] = []
+        for format in device.formats {
+            let desc = format.formatDescription
+            let dims = CMVideoFormatDescriptionGetDimensions(desc)
+            let w = dims.width
+            let h = dims.height
+            
+            let frameRates = format.videoSupportedFrameRateRanges.map { Int($0.maxFrameRate) }
+            
+            let option = CameraFormatOption(
+                format: format,
+                width: w,
+                height: h,
+                frameRates: frameRates
+            )
+            formatOptions.append(option)
+        }
+        
+        // Sort by resolution descending
+        return formatOptions.sorted { $0.width * $0.height > $1.width * $1.height }
     }
 
     // Apply Settings
@@ -203,75 +234,73 @@ class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBuf
             device.unlockForConfiguration()
             DispatchQueue.main.async {
                 self.selectedFormat = format
-                self.selectedFPS    = fps
+                self.selectedFPS = fps
                 self.updateCurrentSettingsOnMain()
             }
         }
     }
 
-    //these variables are used in the UI of camera
+    // These variables are used in the UI of camera
     private func updateCurrentSettingsOnMain() {
         DispatchQueue.main.async {
             guard let fmt = self.selectedFormat else {
                 print("Format Empty")
                 return
             }
-            self.resolution      = fmt.resolutionLabel
-            self.frameRate       = "\(self.selectedFPS) FPS"
-            self.videoDimensions = CGSize(width: CGFloat(fmt.width),
-                                          height: CGFloat(fmt.height))
+            self.resolution = fmt.resolutionLabel
+            self.frameRate = "\(self.selectedFPS) FPS"
+            self.videoDimensions = CGSize(width: CGFloat(fmt.width), height: CGFloat(fmt.height))
         }
     }
 
-    //Callbacks & Recording
+    // Callbacks & Recording
     func fileOutput(_ output: AVCaptureFileOutput,
                     didFinishRecordingTo outputFileURL: URL,
                     from _: [AVCaptureConnection],
                     error: (any Error)?) {
+        
+        
         DispatchQueue.main.async {
             self.isRecording = false
-            self.videoURL    = outputFileURL
+            self.videoURL = outputFileURL
+        
+            print("Recording completed for position")
+            print("Video saved at: \(outputFileURL)")
         }
-        if let e = error { print("Recording Error: \(e)") }
+        
+        if let e = error {
+            print("Recording Error: \(e)")
+        }
     }
     
-    //encrypt and save local
-//    private func saveLocal(subject: SubjectEntity, fileURL: URL, duration: Double) -> RecordingEntity? {
-//        guard let viewContext = self.viewContext else { return nil }
-//        guard let uid = Auth.auth().currentUser?.uid else { return nil }
-//        
-//        do {
-//            //admin is key so only they can access
-//            let rawData = try Data(contentsOf: fileURL)
-//            
-//            let newRecording = RecordingEntity(context: viewContext)
-//            newRecording.recordingId = UUID()
-//            newRecording.timestamp = Date()
-//            if let startTime = self.startTime {
-//                let warn = warningMessages.warningHistory.map {
-//                    "\($0.timestamp.timeIntervalSince1970 - startTime.timeIntervalSince1970): \($0.text)"
-//                }
-//                newRecording.warnings = warn
-//            }
-//            newRecording.orientation = savedOrientation.isPortrait ? "portrait" : "landscape"
-//            newRecording.duration = duration
-//            newRecording.synced = synced
-//            newRecording.ownerId = uid
-//            
-//            try? viewContext.save()
-//            return newRecording
-//        } catch {
-//            print("Error while encrypting\(error)")
-//            return nil
-//        }
-//    }
+    // Optional: Save recording with position metadata
+    private func saveRecordingWithPosition(url: URL, position: Position) {
+        guard let viewContext = self.viewContext else { return }
+        
+        // Example of how you might save this to Core Data
+        // Adjust based on your actual RecordingEntity structure
+        /*
+        let newRecording = RecordingEntity(context: viewContext)
+        newRecording.recordingId = UUID()
+        newRecording.timestamp = Date()
+        newRecording.videoURL = url
+        newRecording.exerciseName = position.name
+        newRecording.exerciseIcon = position.icon
+        
+        if let startTime = self.startTime {
+            newRecording.duration = Date().timeIntervalSince(startTime)
+        }
+        
+        try? viewContext.save()
+        */
+    }
     
-    //buffer to capture the actual video
+    // Buffer to capture the actual video
     func captureOutput(
-      _ output: AVCaptureOutput,
-      didOutput sampleBuffer: CMSampleBuffer,
-      from connection: AVCaptureConnection ) {
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection) {
         guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        // Process frames here if needed
     }
 }
-
