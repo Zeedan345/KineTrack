@@ -2,7 +2,7 @@
 //  CamerePreview.swift
 //  Heart Sensor
 //
-//  Created by Zeedan Khan.
+//  Created by Zeedan Khan
 //
 
 import SwiftUI

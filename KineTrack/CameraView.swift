@@ -13,6 +13,10 @@ struct CameraView: View {
     @StateObject private var model: FrameHandler
     @State private var previewView = VideoPreviewView()
     
+    init(model: FrameHandler) {
+        _model = StateObject(wrappedValue: model)
+    }
+    
     @Environment(\.presentationMode) var presentationMode
     @AppStorage("isCameraEnabled") private var isCameraEnabled: Bool = true
     

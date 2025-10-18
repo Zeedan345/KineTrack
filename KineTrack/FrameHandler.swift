@@ -27,10 +27,7 @@ struct CameraFormatOption: Identifiable, Equatable {
     }
 }
 
-class FrameHandler: NSObject,
-    ObservableObject,
-    AVCaptureVideoDataOutputSampleBufferDelegate,
-                    AVCaptureFileOutputRecordingDelegate, AVCaptureDepthDataOutputDelegate
+class FrameHandler: NSObject,ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureFileOutputRecordingDelegate
 {
     // Core session & device I/O
     private var viewContext: NSManagedObjectContext?
@@ -153,15 +150,6 @@ class FrameHandler: NSObject,
         if captureSession.canAddOutput(movieOut) {
             captureSession.addOutput(movieOut)
             movieFileOutput = movieOut
-        }
-        let depthDataOutput = AVCaptureDepthDataOutput()
-        depthDataOutput.isFilteringEnabled = true
-        if captureSession.canAddOutput(depthDataOutput) {
-            captureSession.addOutput(depthDataOutput)
-            depthDataOutput.setDelegate(self, callbackQueue: DispatchQueue(label: "depthQueue"))
-        }
-        if let connection = depthDataOutput.connection(with: .depthData) {
-            connection.isEnabled = true
         }
         captureSession.commitConfiguration()
         customApplyFormat()

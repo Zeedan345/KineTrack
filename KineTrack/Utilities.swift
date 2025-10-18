@@ -90,57 +90,6 @@ func discoverSupportedFormats(position: AVCaptureDevice.Position) -> [CameraForm
     return sorted
 }
 
-func asyncFetchUserRole() async -> String? {
-    guard let user = Auth.auth().currentUser else {
-        print("Not Logged In")
-        return nil
-    }
-    let uid = user.uid
-    let db = Firestore.firestore()
-    
-    do {
-        let document = try await db.collection("users").document(uid).getDocument()
-        return document.data()?["role"] as? String
-    } catch {
-        print("Error fetching user role: \(error)")
-        return nil
-    }
-}
-
-func clearUserData(entityName: String) async {
-    let role = await asyncFetchUserRole()
-    let userId = Auth.auth().currentUser?.uid
-    guard role != "admin" else {
-        print("Admin Skipping")
-        return
-    }
-    
-    let context = PersistenceController.shared.container.viewContext
-    let fetchRequest: NSFetchRequest<NSManagedObject> = NSFetchRequest(entityName: entityName)
-    
-    do {
-        let objectsToDelete = try context.fetch(fetchRequest)
-        guard !objectsToDelete.isEmpty else { return }
-        
-        let fileManager = FileManager.default
-        for object in objectsToDelete {
-            if let synced = object.value(forKey: "synced") as? Bool, synced, object.value(forKey: "ownerId") as? String == userId {
-                if let localURL = object.value(forKey: "url") as? URL {
-                    if fileManager.fileExists(atPath: localURL.path) {
-                        try fileManager.removeItem(at: localURL)
-                        print("Deleted file at: \(localURL.path)")
-                    }
-                }
-                context.delete(object)
-            }
-        }
-        try context.save()
-        print("Successfully cleared entity '\(entityName)' and associated files.")
-        
-    } catch {
-        print("Failed to clear entity '\(entityName)': \(error)")
-    }
-}
 func calculateTime(_ time: Date, start: Double) -> Double {
     return (time.timeIntervalSince1970 - start)
 }
