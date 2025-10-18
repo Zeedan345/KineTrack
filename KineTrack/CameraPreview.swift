@@ -2,7 +2,7 @@
 //  CamerePreview.swift
 //  Heart Sensor
 //
-//  Created by Taebi Lab on 6/11/25.
+//  Created by Zeedan Khan.
 //
 
 import SwiftUI

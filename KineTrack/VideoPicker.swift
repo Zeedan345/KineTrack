@@ -2,7 +2,7 @@
 //  VideoPicker.swift
 //  Heart Sensor
 //
-//  Created by Taebi Lab on 7/3/25.
+//  Created by Zeedan Khan
 //
 
 import SwiftUI

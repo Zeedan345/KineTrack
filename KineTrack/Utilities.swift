@@ -6,61 +6,10 @@
 //
 
 import Foundation
-import FirebaseFirestore
 import Security
-import CryptoKit
 import AVKit
-import FirebaseAuth
 import CoreData
 
-func fetchUserRole(completion: @escaping(String?) -> Void) {
-    guard let user = Auth.auth().currentUser else {
-        print("Not Logged In")
-        return
-    }
-    let uid = user.uid
-    let db = Firestore.firestore()
-    db.collection("users").document(uid).getDocument { document, error in
-        if let data = document?.data(), let role = data["role"] as? String {
-                completion(role)
-            } else {
-                completion(nil)
-            }
-    }
-}
-
-func getOrCreateKey(for role: String) -> SymmetricKey? {
-    //Tag returns an encoding
-    let tag = "MSU.Heart-Sensor.\(role)Key".data(using: .utf8)!
-
-    //Query to check if in Keychain
-    var query: [String: Any] = [
-        kSecClass as String: kSecClassKey,
-        kSecAttrApplicationTag as String: tag,
-        kSecReturnData as String: true
-    ]
-    
-    //if in keychain, get the key
-    var item: CFTypeRef?
-    if SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-       let data = item as? Data {
-        return SymmetricKey(data: data)
-    }
-
-    // Key not found, create and store
-    let newKey = SymmetricKey(size: .bits256)
-    let keyData = newKey.withUnsafeBytes { Data($0) }
-
-    query = [
-        kSecClass as String: kSecClassKey,
-        kSecAttrApplicationTag as String: tag,
-        kSecValueData as String: keyData,
-        kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
-    ]
-
-    let status = SecItemAdd(query as CFDictionary, nil)
-    return (status == errSecSuccess) ? newKey : nil
-}
 func formatTime(_ date: Date) -> String {
     let formatter = DateFormatter()
     formatter.timeStyle = .medium
