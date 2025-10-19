@@ -59,7 +59,9 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
 
     @Published var videoDimensions: CGSize?
     private var permissionGranted = false
-
+    
+    weak var webSocketController: ViewController?
+    
     @Published var orienatation: UIDeviceOrientation = .portrait
 
     override init() {
@@ -301,6 +303,16 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection) {
         guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        // Process frames here if needed
+        
+        let ciImage = CIImage(cvPixelBuffer: buffer)
+        guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+        let uiImage = UIImage(cgImage: cgImage)
+        
+        guard let jpegData = uiImage.jpegData(compressionQuality: 0.7) else { return }
+        
+        // Send via WebSocket if connected
+        if let controller = webSocketController, controller.isConnected {
+            controller.sendData(jpegData)
+        }
     }
 }
