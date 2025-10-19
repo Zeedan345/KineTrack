@@ -13,7 +13,6 @@ import mediapipe as mp
 
 def save_pose_landmarks_json(
     image: Union[bytes, str, np.ndarray],
-    output_json_path: str,
     *,
     image_id: Optional[str] = None,
     draw_overlay: bool = False,
@@ -63,7 +62,6 @@ def save_pose_landmarks_json(
                 "message": "Could not decode image."
             }]
         }
-        _write_json(output_json_path, out)
         return out
 
     h, w = bgr.shape[:2]
@@ -89,7 +87,6 @@ def save_pose_landmarks_json(
             "message": "No pose landmarks detected."
         }
         out = _wrap_metadata(frame, start_time)
-        _write_json(output_json_path, out)
         return out
 
     lms = results.pose_landmarks.landmark
