@@ -65,6 +65,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
 
     
     @Published var orienatation: UIDeviceOrientation = .portrait
+    @Published var aiFeedback: String?
 
     override init() {
         super.init()
@@ -285,6 +286,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
                 sendPromptWithVideo(position: position.name, videoURL: outputFileURL) {result in
                     switch result {
                     case .success(let text):
+                        self.aiFeedback = text
                         print("Response: \(text)")
                     case .failure(let error):
                         print("Error: \(error)")
@@ -325,7 +327,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         guard let jpegData = uiImage.jpegData(compressionQuality: 0.7) else { return }
         
         if frameCount % 15 == 0 && isRecording == true {
-            //webSocketController?.sendPoseFrame(poseName: "squats", frameID: frameCount, image: uiImage)
+            webSocketController?.sendPoseFrame(poseName: "squats", frameID: frameCount, image: uiImage)
         }
     }
 }

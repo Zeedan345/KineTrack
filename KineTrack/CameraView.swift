@@ -27,6 +27,8 @@ struct CameraView: View {
     @State private var showErrorAlert: Bool = false
     @State private var savedOrientation: AVCaptureVideoOrientation? = nil
     
+    @State private var showResults: Bool = false
+    
 
     var body: some View {
         NavigationView {
@@ -130,6 +132,7 @@ struct CameraView: View {
                             guard isCameraEnabled else { return }
                             if model.isRecording {
                                 model.stopRecording()
+                                showResults = true
                                 stopTimer()
                             } else {
                                 if selectedPosition == nil {
@@ -171,20 +174,26 @@ struct CameraView: View {
                         }
                     }
                 }
+                NavigationLink(isActive: $showResults) {
+                    if let url = model.videoURL, let pos = selectedPosition {
+                        ResultsView(videoURL: url, position: pos, feedback: model.aiFeedback)
+                            .navigationBarBackButtonHidden(true)
+                    } else {
+                        EmptyView()
+                    }
+                } label: { EmptyView() }
             }
             .onAppear {
                 model.setViewContext(viewContext)
                 model.startSession()
-//                let vc = ViewController()
-//                viewController = vc
-//                model.webSocketController = vc
-//                let socket = WebSocketManager()
-//                model.webSocketController = socket
-//                model.webSocketController?.connect()
-//
-//                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//                    model.webSocketController!.sendPing()
-//                }
+                
+                let socket = WebSocketManager()
+                model.webSocketController = socket
+                model.webSocketController?.connect()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    model.webSocketController!.sendPing()
+                }
 
             }
             .onDisappear {
