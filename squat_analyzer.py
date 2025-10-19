@@ -18,7 +18,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.FRAME_BUFFER = 3
         self.up_frames = 0
         self.down_frames = 0
-        self.smoothing_factor = 0.01
+        self.smoothing_factor = 0.3
         self.smoothed_avg_knee_angle = None
 
         # --- Form Thresholds (Tunable) ---
@@ -31,6 +31,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.knee_splaying_threshold_ratio = 1.8 # knee_dist > ankle_dist * this = Splaying
         self.good_form_frames = 0
         self.good_form_bool = False
+        self.knee_y_at_max_hip_y = 0.0
 
     def process_frame(self, frame_data):
         """
@@ -87,8 +88,9 @@ class SquatAnalyzer(ExerciseAnalyzer):
             # While in the 'down' phase...
             elif self.stage == 'down':
                 # FIX: Continuously track the lowest hip position (maximum y-value).
-                self.max_hip_y_in_rep = max(self.max_hip_y_in_rep, avg_hip_y)
-
+                if avg_hip_y > self.max_hip_y_in_rep: # If this is a new lowest point
+                    self.max_hip_y_in_rep = avg_hip_y
+                    self.knee_y_at_max_hip_y = avg_knee_y
                 # --- 1. Knee Caving / Splaying Check (performed during descent) ---
                 knee_dist = abs(l_knee[0] - r_knee[0])
                 ankle_dist = abs(l_ankle[0] - r_ankle[0])
@@ -112,7 +114,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
                     
                     # --- 2. Depth Check (performed at the end of the rep) ---
                     # FIX: Check if the lowest hip point (max y) went below the knee level (avg_knee_y).
-                    if self.max_hip_y_in_rep < avg_knee_y:
+                    if self.max_hip_y_in_rep < self.knee_y_at_max_hip_y:
                         feedback_this_frame.append("Go deeper!")
                         self.good_form_bool = False
                     else:
@@ -121,6 +123,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
                     
                     # Reset tracker for the next rep
                     self.max_hip_y_in_rep = 0.0
+                    self.knee_y_at_max_hip_y = 0.0
             if (self.good_form_bool):
                 self.good_form_frames += 1
                 if (self.good_form_frames >= 10):

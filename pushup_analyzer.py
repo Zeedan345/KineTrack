@@ -70,7 +70,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
                 if self.last_feedback != feedback:
                     feedback_this_frame.append(feedback)
                     self.last_feedback = feedback
-            else:
+            elif self.last_feedback == "Keep your back straight!":
                 self.last_feedback = ""
 
             # --- 2. Elbow Flare Check ---
@@ -80,6 +80,8 @@ class PushupAnalyzer(ExerciseAnalyzer):
                     feedback_this_frame.append(feedback)
                     self.last_feedback = feedback
                 self.good_form_bool = False
+            elif self.last_feedback == "Tuck your elbows in a bit!":
+                self.last_feedback = ""
             
             # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
             if self.smoothed_elbow_angle < self.rep_threshold:
@@ -124,9 +126,13 @@ class PushupAnalyzer(ExerciseAnalyzer):
             # Add new, unique feedback to the session log
             if (self.good_form_bool):
                 self.good_form_frames += 1
-                if (self.good_form_frames >= 10):
+                if (self.good_form_frames >= 8):
                     feedback_this_frame.append("Great form! Keep it up!")
                     self.good_form_frames = 0
+            else:
+                # *** BONUS FIX ***
+                # If form was bad, reset the good form counter
+                self.good_form_frames = 0
             
             unique_feedback_in_log = set(self.feedback_log)
             for item in feedback_this_frame:
