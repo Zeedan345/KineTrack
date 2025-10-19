@@ -13,6 +13,7 @@ import mediapipe as mp
 
 def save_pose_landmarks_json(
     image: Union[bytes, str, np.ndarray],
+    pose,
     *,
     image_id: Optional[str] = None,
     draw_overlay: bool = False,
@@ -59,11 +60,8 @@ def save_pose_landmarks_json(
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
 
     # ---- MediaPipe Pose (static image mode) ----
-    mp_pose = mp.solutions.pose
     mp_draw = mp.solutions.drawing_utils
-    with mp_pose.Pose(static_image_mode=True, model_complexity=1,
-                      enable_segmentation=False, min_detection_confidence=0.5) as pose:
-        results = pose.process(rgb)
+    results = pose.process(rgb)
 
     if not results.pose_landmarks:
         frame = {

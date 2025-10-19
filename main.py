@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import base64 # For debugging image data if needed
 import numpy as np
+import mediapipe as mp
 
 # Import all your analyzer classes
 from pushup_analyzer import PushupAnalyzer
@@ -34,6 +35,8 @@ async def websocket_endpoint(websocket: WebSocket):
     
     analyzer: ExerciseAnalyzer = None
     exercise_type: str = None
+    pose = mp.solutions.pose.Pose(static_image_mode=True, model_complexity=1,
+                      enable_segmentation=False, min_detection_confidence=0.5)
 
     try:
         while True:
@@ -51,7 +54,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     frame_id = message.get("frame_id")
                     frame = message.get("frame") # This contains the landmark data
                     logging.info(type(frame))
-                    frame_data = save_pose_landmarks_json(base64.b64decode(frame)) # Convert to expected format
+                    frame_data = save_pose_landmarks_json(base64.b64decode(frame), pose) # Convert to expected format
                 else:
                     continue
 
