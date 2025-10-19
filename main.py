@@ -8,7 +8,7 @@ from pushup_analyzer import PushupAnalyzer
 from squat_analyzer import SquatAnalyzer
 # Ensure you have a base class file if your analyzers inherit from it
 from exercise_analyzer import ExerciseAnalyzer
-
+from pose_cam import save_pose_landmarks_json
 
 # Basic configuration for the app
 app = FastAPI(title="KineTrack Heuristic Analyzer")
@@ -48,9 +48,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 if msg_type == "pose":
                     pose_name = message.get("pose_name")
                     frame_id = message.get("frame_id")
-                    frame_data = message.get("frame") # This contains the landmark data
+                    frame = message.get("frame") # This contains the landmark data
+                    frame_data = save_pose_landmarks_json(frame) # Convert to expected format
+                else:
+                    continue
 
-                # frame_data = {'a': 1} #TODO: Integrate Kevin's code
                 if not all([pose_name, frame_id is not None, frame_data]):
                     await websocket.send_json({
                         "message": "Invalid message format. Required keys: 'pose', 'frame_id', 'frame'.",
