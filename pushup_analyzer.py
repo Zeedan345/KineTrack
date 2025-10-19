@@ -75,7 +75,10 @@ class PushupAnalyzer(ExerciseAnalyzer):
 
             # --- 2. Elbow Flare Check ---
             if elbow_flare_angle > self.elbow_flare_angle_max:
-                feedback_this_frame.append("Tuck your elbows in a bit!")
+                feedback = "Tuck your elbows in a bit!"
+                if self.last_feedback != feedback:
+                    feedback_this_frame.append(feedback)
+                    self.last_feedback = feedback
                 self.good_form_bool = False
             
             # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
