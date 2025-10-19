@@ -179,6 +179,9 @@ struct CameraView: View {
             .onAppear {
                 model.setViewContext(viewContext)
                 model.startSession()
+                let vc = ViewController()
+                viewController = vc
+                model.webSocketController = vc
             }
             .onDisappear {
                 model.stopSession()

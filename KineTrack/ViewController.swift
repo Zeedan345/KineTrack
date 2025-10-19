@@ -18,12 +18,12 @@ class ViewController: UIViewController, URLSessionWebSocketDelegate {
         
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze/pushups")
+        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze")
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze/pushups")
+        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze")
     }
     func connect(urlString: String) {
         guard let url = URL(string: urlString) else {
