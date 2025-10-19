@@ -34,8 +34,14 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         # --- STAGE 1: Idle loop, waiting for the 'start' message ---
         while analyzer is None:
-            request_data = await websocket.receive_json()
-            
+            # FIX: Receive raw text to handle non-JSON messages gracefully
+            raw_data = await websocket.receive_text()
+            try:
+                request_data = json.loads(raw_data)
+            except json.JSONDecodeError:
+                logger.warning(f"Received non-JSON message, ignoring: {raw_data}")
+                continue # Wait for the next message
+
             message_type = request_data.get("type")
 
             if message_type == "start":
@@ -62,8 +68,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
         # --- STAGE 2: Main loop to process frames after being started ---
         while True:
-            # Now we expect the frame data format you described previously
-            frame_request = await websocket.receive_json()
+            # FIX: Receive raw text first and then parse
+            raw_data = await websocket.receive_text()
+            try:
+                frame_request = json.loads(raw_data)
+            except json.JSONDecodeError:
+                logger.warning(f"Received non-JSON frame data, ignoring: {raw_data}")
+                continue
 
             frame_id = frame_request.get("frame_id")
             frame_data_for_analyzer = frame_request.get("frame")
