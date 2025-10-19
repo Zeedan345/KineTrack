@@ -10,12 +10,6 @@ app = FastAPI(title="KineTrack Heuristic Analyzer")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kinetrack")
 
-# Serve the frontend HTML for easy testing
-@app.get("/", response_class=HTMLResponse)
-async def get():
-    with open("frontend_example.html") as f:
-        return HTMLResponse(content=f.read(), status_code=200)
-
 @app.websocket("/ws/analyze/pushups")
 async def websocket_endpoint(websocket: WebSocket):
     """
