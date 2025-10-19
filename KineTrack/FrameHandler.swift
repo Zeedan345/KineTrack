@@ -106,6 +106,10 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         frameCount = 0
         startTime = Date()
         currentRecordingPosition = position
+        DispatchQueue.main.async {
+            self.aiFeedback = nil
+            self.videoURL = nil
+        }
         
         let tmpURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("capture_\(UUID().uuidString).mov")

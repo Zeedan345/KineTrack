@@ -176,7 +176,7 @@ struct CameraView: View {
                 }
                 NavigationLink(isActive: $showResults) {
                     if let url = model.videoURL, let pos = selectedPosition {
-                        ResultsView(model: model, videoURL: url, position: pos, feedback: model.aiFeedback)
+                        ResultsView(model: model, videoURL: url, position: pos)
                             .id(url)
                             .navigationBarBackButtonHidden(true)
                     } else {

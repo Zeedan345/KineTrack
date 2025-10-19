@@ -13,17 +13,15 @@ struct ResultsView: View {
     
     let videoURL: URL
     let position: Position
-    let feedback: String?
     
     @Environment(\.presentationMode) var presentationMode
     @State private var player: AVPlayer
     @State private var isPlaying: Bool = true
     
-    init(model: FrameHandler, videoURL: URL, position: Position, feedback: String?) {
+    init(model: FrameHandler, videoURL: URL, position: Position) {
         self.model = model
         self.videoURL = videoURL
         self.position = position
-        self.feedback = feedback
         _player = State(initialValue: AVPlayer(url: videoURL))
     }
     
@@ -43,7 +41,7 @@ struct ResultsView: View {
                 .foregroundColor(.primary)
             
             // Feedback section
-            if let feedback = feedback, !feedback.isEmpty {
+            if let feedback = model.aiFeedback, !feedback.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Gemini Feedback")
                         .font(.headline)
