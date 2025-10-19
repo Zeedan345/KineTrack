@@ -27,8 +27,6 @@ struct HistoryView: View {
                 }
             }
             .navigationBarTitle("History")
-            .navigationBarItems(trailing: Button("Clear All") {
-            })
         }
     }
 }
