@@ -55,15 +55,15 @@ async def websocket_endpoint(websocket: WebSocket):
             if message_type == "start":
                 exercise_type = request_data.get("exercise")
                 
-                if exercise_type in ANALYZER_CLASSES:
-                    analyzer_class = ANALYZER_CLASSES[exercise_type]
-                    analyzer = analyzer_class()
-                    logger.info(f"Started analyzer for '{exercise_type}'.")
-                    await websocket.send_json({"status": "started", "exercise": exercise_type})
-                    break 
-                else:
-                    logger.error(f"Unknown exercise type: {exercise_type}")
-                    await websocket.send_json({"status": "error", "message": f"Unknown exercise type: {exercise_type}"})
+                # if exercise_type in ANALYZER_CLASSES:
+                #     analyzer_class = ANALYZER_CLASSES[exercise_type]
+                #     analyzer = analyzer_class()
+                #     logger.info(f"Started analyzer for '{exercise_type}'.")
+                #     await websocket.send_json({"status": "started", "exercise": exercise_type})
+                #     break 
+                # else:
+                #     logger.error(f"Unknown exercise type: {exercise_type}")
+                #     await websocket.send_json({"status": "error", "message": f"Unknown exercise type: {exercise_type}"})
             
             elif message_type == "ping":
                 await websocket.send_json({"type": "pong"})
