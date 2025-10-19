@@ -46,7 +46,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     
     // Position tracking
     @Published var selectedPosition: Position?
-//    @Published var currentRecordingPosition: Position?
+    @Published var currentRecordingPosition: Position?
     
     // Selected format & FPS state used by UI and configuration
     @Published var supportedFormats: [CameraFormatOption] = []
@@ -98,10 +98,11 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     }
 
     // Recording Control
-    func startRecording() {
+    func startRecording(for position: Position) {
         guard let movieOut = movieFileOutput, !movieOut.isRecording else { return }
         
         startTime = Date()
+        currentRecordingPosition = position
         
         let tmpURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("capture_\(UUID().uuidString).mov")
@@ -268,6 +269,11 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         
             print("Recording completed for position")
             print("Video saved at: \(outputFileURL)")
+            
+            if let position = self.currentRecordingPosition {
+                self.saveRecordingWithPosition(url: outputFileURL, position: position)
+            }
+
         }
         
         if let e = error {

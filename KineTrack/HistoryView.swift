@@ -6,13 +6,64 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct HistoryView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.presentationMode) private var presentationMode
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \RecordingEntity.timestamp, ascending: false)],
+        animation: .default)
+    private var fetchedRecordings: FetchedResults<RecordingEntity>
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            List(fetchedRecordings, id: \.self) { recording in
+                let _ = print(recording.timestamp?.formatted(date: .numeric, time: .omitted))
+                NavigationLink(destination: RecordingView(recording: recording)) {
+                    Text("\(recording.exerciseName ?? "N/A") at \(recording.timestamp?.formatted(date: .numeric, time: .omitted) ?? "N/A")")
+                        .font(.headline)
+                        .fontWeight(.regular)
+                }
+            }
+            .navigationBarTitle("History")
+            .navigationBarItems(trailing: Button("Clear All") {
+            })
+        }
     }
 }
 
-#Preview {
-    HistoryView()
+struct RecordingView: View {
+    let recording: RecordingEntity
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            if let url = getVideoURL() {
+                VideoPlayer(player: AVPlayer(url: url))
+                    .aspectRatio(contentMode: .fit)
+                    .cornerRadius(12)
+                    .shadow(radius: 8)
+                    .frame(maxHeight: 300)
+            } else {
+                Text("No video available")
+                    .foregroundColor(.secondary)
+            }
+            
+            if let timestamp = recording.timestamp {
+                Text(timestamp.formatted(date: .abbreviated, time: .shortened))
+                    .font(.headline)
+            }
+            
+            Spacer()
+        }
+        .padding()
+        .navigationTitle(recording.exerciseName ?? "Recording")
+    }
+    
+    private func getVideoURL() -> URL? {
+        if let path = recording.url {
+            return URL(fileURLWithPath: path)
+        }
+        return nil
+    }
 }

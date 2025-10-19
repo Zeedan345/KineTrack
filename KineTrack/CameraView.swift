@@ -134,7 +134,7 @@ struct CameraView: View {
                                 if selectedPosition == nil {
                                     showErrorAlert = true
                                 } else {
-                                    model.startRecording()
+                                    model.startRecording(for: selectedPosition!)
                                     //savedOrientation = model.orienatation
                                     startTimer()
                                 }
