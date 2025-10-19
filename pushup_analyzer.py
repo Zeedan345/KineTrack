@@ -117,7 +117,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
 
 # --- Example Usage ---
 if __name__ == '__main__':
-    json_file_path = 'goodpush.json'
+    json_file_path = 'goodpushup_training_data.json'
     workout_data = None
 
     print(f"--- Attempting to load workout data from '{json_file_path}' ---")
