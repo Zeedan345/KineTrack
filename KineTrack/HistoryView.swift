@@ -19,7 +19,6 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             List(fetchedRecordings, id: \.self) { recording in
-                let _ = print(recording.timestamp?.formatted(date: .numeric, time: .omitted))
                 NavigationLink(destination: RecordingView(recording: recording)) {
                     Text("\(recording.exerciseName ?? "N/A") at \(recording.timestamp?.formatted(date: .numeric, time: .omitted) ?? "N/A")")
                         .font(.headline)

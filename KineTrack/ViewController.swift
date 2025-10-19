@@ -15,10 +15,15 @@ class ViewController: UIViewController, URLSessionWebSocketDelegate {
     
     // Callback for received text messages
     var onTextReceived: ((String) -> Void)?
+        
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze/pushups")
+    }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        connect(urlString: "wss://.com")
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        connect(urlString: "wss://kinetrack.onrender.com/ws/analyze/pushups")
     }
     func connect(urlString: String) {
         guard let url = URL(string: urlString) else {

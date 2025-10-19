@@ -26,6 +26,8 @@ struct CameraView: View {
     @State private var isShowingPositionPicker: Bool = false
     @State private var showErrorAlert: Bool = false
     @State private var savedOrientation: AVCaptureVideoOrientation? = nil
+    
+    @State private var viewController: ViewController?
 
     var body: some View {
         NavigationView {
@@ -135,6 +137,9 @@ struct CameraView: View {
                                     showErrorAlert = true
                                 } else {
                                     model.startRecording(for: selectedPosition!)
+                                    let vc = ViewController()
+                                    viewController = vc
+                                    model.webSocketController = vc
                                     //savedOrientation = model.orienatation
                                     startTimer()
                                 }
