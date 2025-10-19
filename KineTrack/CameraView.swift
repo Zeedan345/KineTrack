@@ -205,6 +205,9 @@ struct CameraView: View {
             .onChange(of: model.selectedFrameRate) { newFrame in
                 model.customApplyFormat()
             }
+            .onChange(of: selectedPosition) { newPosition in
+                model.selectedPosition = newPosition
+            }
             // Position Picker Sheet
             .sheet(isPresented: $isShowingPositionPicker) {
                 NavigationView {

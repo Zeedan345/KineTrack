@@ -326,8 +326,9 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         
         guard let jpegData = uiImage.jpegData(compressionQuality: 0.7) else { return }
         
-        if frameCount % 15 == 0 && isRecording == true {
-            webSocketController?.sendPoseFrame(poseName: "squats", frameID: frameCount, image: uiImage)
+        if frameCount % 15 == 0 && isRecording == true, let position = selectedPosition {
+            let pos = position.name == "Squat" ? "squats" : "pushups"
+            webSocketController?.sendPoseFrame(poseName: pos, frameID: frameCount, image: uiImage)
         }
     }
 }
