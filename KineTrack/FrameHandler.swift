@@ -279,22 +279,13 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     private func saveRecordingWithPosition(url: URL, position: Position) {
         guard let viewContext = self.viewContext else { return }
         
-        // Example of how you might save this to Core Data
-        // Adjust based on your actual RecordingEntity structure
-        /*
         let newRecording = RecordingEntity(context: viewContext)
         newRecording.recordingId = UUID()
         newRecording.timestamp = Date()
-        newRecording.videoURL = url
+        newRecording.url = url.path
         newRecording.exerciseName = position.name
-        newRecording.exerciseIcon = position.icon
-        
-        if let startTime = self.startTime {
-            newRecording.duration = Date().timeIntervalSince(startTime)
-        }
         
         try? viewContext.save()
-        */
     }
     
     // Buffer to capture the actual video
