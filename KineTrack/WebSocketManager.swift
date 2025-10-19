@@ -38,7 +38,7 @@ class WebSocketManager: NSObject {
     }
     
     func sendPoseFrame(poseName: String, frameID: Int, image: UIImage) {
-        guard let base64 = image.toBase64JPEG(quality: 0.1) else {
+        guard let base64 = image.toBase64JPEG(quality: 0.3) else {
             print("Failed to encode image")
             return
         }
@@ -75,6 +75,12 @@ class WebSocketManager: NSObject {
                 switch message {
                 case .string(let text):
                     print("Received text: \(text)")
+                    
+                    if let data = text.data(using: .utf8),
+                       let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+                       let message = json["message"] as? String {
+                        KineSpeaker.shared.speak(message)
+                    }
                 case .data(let data):
                     print("Received data")
                 @unknown default:

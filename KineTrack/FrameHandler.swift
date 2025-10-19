@@ -281,9 +281,19 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
             print("Recording completed for position")
             print("Video saved at: \(outputFileURL)")
             
-            if let position = self.currentRecordingPosition {
-                self.saveRecordingWithPosition(url: outputFileURL, position: position)
-            }
+//            if let position = self.currentRecordingPosition {
+//                sendPromptWithVideo(position: position.name, videoURL: outputFileURL) {result in
+//                    switch result {
+//                    case .success(let data):
+//                        if let json = try? JSONSerialization.jsonObject(with: data) {
+//                            print("Response: \(json)")
+//                        }
+//                    case .failure(let error):
+//                        print("Error: \(error)")
+//                    }
+//                    self.saveRecordingWithPosition(url: outputFileURL, position: position)
+//                }
+//            }
 
         }
         
