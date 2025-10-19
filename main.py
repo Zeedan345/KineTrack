@@ -83,7 +83,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 feedback_message = " ".join(feedback_list)
 
                 # --- 5. Send the response back to the client ---
-                await websocket.send_json({
+                if feedback_message.strip(): await websocket.send_json({
                     "message": feedback_message,
                     "message_id": frame_id
                 })
