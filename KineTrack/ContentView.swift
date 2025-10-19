@@ -1,86 +1,92 @@
-//
 //  ContentView.swift
-//  KineTrack
+//  Heart Sensor
 //
-//  Created by Zeedan on 10/18/25.
-//
+
 
 import SwiftUI
 import CoreData
+import UIKit
 
 struct ContentView: View {
+    // Use this to change the current tab
+    @State private var selectedTab = 0
     @Environment(\.managedObjectContext) private var viewContext
 
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
+    // Hold the selected subject for CameraView
+//    @State private var cameraSubject: SubjectEntity? = nil
 
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                    } label: {
-                        Text(item.timestamp!, formatter: itemFormatter)
-                    }
+        TabView(selection: $selectedTab) {
+            HomeView(selectedTab: $selectedTab)
+                .tabItem {
+                    Image(systemName: "house.fill")
+                    Text("Home")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .tag(0)
+
+//            SubjectsView()
+//                .tabItem {
+//                    Image(systemName: "person")
+//                    Text("Subjects")
+//                }
+//                .tag(1)
+
+            CameraView()
+                .tabItem {
+                    Image(systemName: "camera")
+                    Text("Camera")
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
+                .tag(2)
+
+            HistoryView()
+                .tabItem {
+                    Image(systemName: "book.pages")
+                    Text("History")
                 }
-            }
-            Text("Select an item")
+                .tag(3)
+
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gearshape")
+                    Text("Settings")
+                }
+                .tag(4)
         }
+        .onAppear {
+            customTabAppearence()
+        }
+        .onChange(of: selectedTab) { _ in
+            customTabAppearence()
+        }
+        // Listen for programmatic camera navigation
+//        .onReceive(NotificationCenter.default.publisher(for: .goToCameraTab)) { notification in
+//            if let subject = notification.object as? SubjectEntity {
+//                cameraSubject = subject
+//                selectedTab = 2
+//            }
+//        }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+    //this is for camera view
+    private func customTabAppearence() {
+        if selectedTab == 2 {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithTransparentBackground()
+            appearance.backgroundColor = UIColor.black.withAlphaComponent(0.05)
+            appearance.stackedLayoutAppearance.normal.iconColor = UIColor.white.withAlphaComponent(0.7)
+            appearance.stackedLayoutAppearance.selected.iconColor = UIColor.white
+            appearance.stackedLayoutAppearance.normal.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white.withAlphaComponent(0.7)]
+            appearance.stackedLayoutAppearance.selected.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.white]
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        } else {
+            UITabBar.appearance().standardAppearance = UITabBarAppearance()
+            UITabBar.appearance().scrollEdgeAppearance = UITabBarAppearance()
         }
     }
 }
 
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
-
 #Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    ContentView()
+        .environment(\.managedObjectContext, PersistenceController.shared.container.viewContext)
 }
