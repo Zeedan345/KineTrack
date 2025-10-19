@@ -45,12 +45,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 
                 msg_type = message.get("type")
 
+                logger.debug(f"Received message of type: {msg_type}")
+
                 if msg_type == "pose":
                     pose_name = message.get("pose_name")
                     frame_id = message.get("frame_id")
                     frame_data = message.get("frame") # This contains the landmark data
 
-                #frame_data = {'a': 1} #TODO: Integrate Kevin's code
+                logger.info(f"Pose Name: {pose_name}, Frame ID: {frame_id}")
+                # frame_data = {'a': 1} #TODO: Integrate Kevin's code
                 if not all([pose_name, frame_id is not None, frame_data]):
                     await websocket.send_json({
                         "message": "Invalid message format. Required keys: 'pose', 'frame_id', 'frame'.",
