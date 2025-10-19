@@ -66,6 +66,25 @@ struct SettingsView: View {
                         .pickerStyle(.menu)
                     }
                 }
+                // About
+                Section(header: Text("About")) {
+                    HStack {
+                        Text("App Version")
+                        Spacer()
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
+                            .foregroundColor(.secondary)
+                    }
+                    HStack {
+                        Text("Developer")
+                        Spacer()
+                        Text("Zeedan Khan")
+                            .foregroundColor(.secondary)
+                        Text("Ryan Goodwin")
+                            .foregroundColor(.secondary)
+                        Text("Kevin Ho")
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             .navigationTitle("Settings")
             .onAppear {
