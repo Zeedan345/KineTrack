@@ -60,7 +60,9 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     @Published var videoDimensions: CGSize?
     private var permissionGranted = false
     
-    weak var webSocketController: ViewController?
+    var webSocketController: WebSocketManager?
+    private var frameCount: Int = 0
+
     
     @Published var orienatation: UIDeviceOrientation = .portrait
 
@@ -100,7 +102,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     // Recording Control
     func startRecording(for position: Position) {
         guard let movieOut = movieFileOutput, !movieOut.isRecording else { return }
-        
+        frameCount = 0
         startTime = Date()
         currentRecordingPosition = position
         
@@ -118,6 +120,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
 
     func stopRecording() {
         guard let movieOut = movieFileOutput, movieOut.isRecording else { return }
+        frameCount = 0
         movieOut.stopRecording()
         DispatchQueue.main.async {
             self.isRecording = false
@@ -255,6 +258,14 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
             self.videoDimensions = CGSize(width: CGFloat(fmt.width), height: CGFloat(fmt.height))
         }
     }
+    func sendFrameToServer(frame: UIImage, pose: String, frameID: Int) {
+        guard let socket = webSocketController else {
+            print("WebSocket not connected")
+            return
+        }
+        socket.sendPoseFrame(poseName: pose, frameID: frameID, image: frame)
+    }
+
 
     // Callbacks & Recording
     func fileOutput(_ output: AVCaptureFileOutput,
@@ -295,21 +306,18 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     }
     
     // Buffer to capture the actual video
-    func captureOutput(
-        _ output: AVCaptureOutput,
-        didOutput sampleBuffer: CMSampleBuffer,
-        from connection: AVCaptureConnection) {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
+        frameCount += 1
         let ciImage = CIImage(cvPixelBuffer: buffer)
         guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
         let uiImage = UIImage(cgImage: cgImage)
         
         guard let jpegData = uiImage.jpegData(compressionQuality: 0.7) else { return }
         
-        // Send via WebSocket if connected
-        if let controller = webSocketController, controller.isConnected {
-            controller.sendData(jpegData)
+        if frameCount % 15 == 0 && isRecording == true {
+            webSocketController?.sendPoseFrame(poseName: "squat", frameID: frameCount, image: uiImage)
         }
     }
 }

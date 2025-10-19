@@ -27,7 +27,6 @@ struct CameraView: View {
     @State private var showErrorAlert: Bool = false
     @State private var savedOrientation: AVCaptureVideoOrientation? = nil
     
-    @State private var viewController: ViewController?
 
     var body: some View {
         NavigationView {
@@ -137,9 +136,6 @@ struct CameraView: View {
                                     showErrorAlert = true
                                 } else {
                                     model.startRecording(for: selectedPosition!)
-                                    let vc = ViewController()
-                                    viewController = vc
-                                    model.webSocketController = vc
                                     //savedOrientation = model.orienatation
                                     startTimer()
                                 }
@@ -179,9 +175,17 @@ struct CameraView: View {
             .onAppear {
                 model.setViewContext(viewContext)
                 model.startSession()
-                let vc = ViewController()
-                viewController = vc
-                model.webSocketController = vc
+//                let vc = ViewController()
+//                viewController = vc
+//                model.webSocketController = vc
+                let socket = WebSocketManager()
+                model.webSocketController = socket
+                model.webSocketController?.connect()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    model.webSocketController!.sendPing()
+                }
+
             }
             .onDisappear {
                 model.stopSession()
