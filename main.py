@@ -50,7 +50,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     pose_name = message.get("pose_name")
                     frame_id = message.get("frame_id")
                     frame = message.get("frame") # This contains the landmark data
-                    frame_data = save_pose_landmarks_json(np.frombuffer(base64.b64decode(frame))) # Convert to expected format
+                    logging.info(type(frame))
+                    frame_data = save_pose_landmarks_json(base64.b64decode(frame)) # Convert to expected format
                 else:
                     continue
 
