@@ -47,7 +47,7 @@ class WebSocketManager: NSObject {
             "type": "pose",
             "pose_name": poseName,
             "frame_id": frameID,
-            "image": base64
+            "frame": base64
         ]
 
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
@@ -74,7 +74,7 @@ class WebSocketManager: NSObject {
             case .success(let message):
                 switch message {
                 case .string(let text):
-                    print("Received text")
+                    print("Received text: \(text)")
                 case .data(let data):
                     print("Received data")
                 @unknown default:
