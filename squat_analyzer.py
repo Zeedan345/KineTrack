@@ -18,7 +18,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.FRAME_BUFFER = 3
         self.up_frames = 0
         self.down_frames = 0
-        self.smoothing_factor = 0.3
+        self.smoothing_factor = 0.01
         self.smoothed_avg_knee_angle = None
 
         # --- Form Thresholds (Tunable) ---
