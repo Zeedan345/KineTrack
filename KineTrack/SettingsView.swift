@@ -70,6 +70,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .onAppear {
                 setupInitialOptions()
+                KineSpeaker.shared.speak("Swapped to the settings tab")
             }
         }
     }

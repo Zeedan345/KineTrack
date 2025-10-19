@@ -19,9 +19,22 @@
 		E4A1EA962F6E4FE9DA19849A /* Pods-KineTrack.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-KineTrack.release.xcconfig"; path = "Target Support Files/Pods-KineTrack/Pods-KineTrack.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		124B2F782EA4AEED00281D73 /* Exceptions for "KineTrack" folder in "KineTrack" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 12BEBDA52EA41F2B006C981F /* KineTrack */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		12BEBDA82EA41F2B006C981F /* KineTrack */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				124B2F782EA4AEED00281D73 /* Exceptions for "KineTrack" folder in "KineTrack" target */,
+			);
 			path = KineTrack;
 			sourceTree = "<group>";
 		};
@@ -310,6 +323,7 @@
 				DEVELOPMENT_TEAM = N2825KZYMA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KineTrack/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to record videos";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access to record audio with videos";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -350,6 +364,7 @@
 				DEVELOPMENT_TEAM = N2825KZYMA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = KineTrack/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "We need camera access to record videos";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need microphone access to record audio with videos";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

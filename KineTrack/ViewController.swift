@@ -92,7 +92,32 @@ class ViewController: UIViewController, URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         isConnected = true
         print("WebSocket connected")
+        let startMessage: [String: Any] = [
+            "type": "start",
+            "exercise": "pushups"
+        ]
+        if let jsonData = try? JSONSerialization.data(withJSONObject: startMessage),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            sendText(jsonString)
+        }
+        startPinging()
     }
+    func startPinging() {
+        Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] timer in
+            guard let self = self, self.isConnected else {
+                timer.invalidate()
+                return
+            }
+
+            let pingMessage: [String: Any] = ["type": "ping"]
+            if let jsonData = try? JSONSerialization.data(withJSONObject: pingMessage),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                self.sendText(jsonString)
+                print("Ping sent")
+            }
+        }
+    }
+
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         isConnected = false

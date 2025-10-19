@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ELEVENLABS_API_KEY</key>
+	<string>384fa406c3e92de5ad8c607aaef55100e2cf74a0318371c1cbcbde0ce2d4a812</string>
+	<key>GEMINI_API_KEY</key>
+	<string>AIzaSyD4Hw8-xu8iDf8s4GaGr-_hgDo2engvRXM</string>
+</dict>
+</plist>
