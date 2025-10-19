@@ -10,8 +10,9 @@ class PushupAnalyzer(ExerciseAnalyzer):
         super().__init__()
         # --- Push-up Specific State Tracking ---
         self.stage = "up" # Start in the 'up' position
-        self.last_feedback = ""
         self.min_angle_in_rep = 180
+        self.last_back_feedback = False  # Track if back feedback is active
+        self.last_elbow_feedback = False  # Track if elbow feedback is active
 
         # --- Frame Buffer for State Change ---
         self.FRAME_BUFFER = 3
@@ -65,25 +66,20 @@ class PushupAnalyzer(ExerciseAnalyzer):
 
             # --- 1. Body Straightness Check ---
             if body_angle < self.body_straight_angle_min:
-                feedback = "Keep your back straight!"
+                feedback = "Keep your back straight."
                 self.good_form_bool = False
-                if self.last_feedback != feedback:
+                if not self.last_back_feedback:
                     feedback_this_frame.append(feedback)
-                    self.last_feedback = feedback
-            elif self.last_feedback == "Keep your back straight!":
-                self.last_feedback = ""
+                    self.last_back_feedback = True
 
             # --- 2. Elbow Flare Check ---
             if elbow_flare_angle > self.elbow_flare_angle_max:
-                feedback = "Tuck your elbows in a bit!"
-                if self.last_feedback != feedback:
-                    feedback_this_frame.append(feedback)
-                    self.last_feedback = feedback
-                self.good_form_bool = False
-            elif self.last_feedback == "Tuck your elbows in a bit!":
-                self.last_feedback = ""
-            
-            # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
+                if not self.last_elbow_feedback:  # Only add if not already active
+                    feedback_this_frame.append("Tuck your elbows in a bit.")
+                    self.last_elbow_feedback = True
+                else:
+                    self.last_elbow_feedback = False            # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
+
             if self.smoothed_elbow_angle < self.rep_threshold:
                 self.down_frames += 1
                 self.up_frames = 0 # Reset the other counter
@@ -107,7 +103,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
                     
                     # --- 4. Depth Check (at the end of the rep) ---
                     if self.min_angle_in_rep > self.depth_threshold_angle:
-                        feedback_this_frame.append("Go deeper on your push-ups!")
+                        feedback_this_frame.append("Go deeper on your push-ups.")
                         self.good_form_bool = False
                     else:
                         # Only count the rep if the depth was good.
@@ -116,7 +112,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
                     # --- 5. Time of Push-up (Tempo Check) ---
                     rep_duration = current_time - self.rep_start_time
                     if rep_duration < self.rep_too_fast_seconds and self.rep_start_time > 0:
-                        feedback_this_frame.append("Slow down your reps!")
+                        feedback_this_frame.append("Slow down your reps.")
                         self.good_form_bool = False
 
                     # Reset trackers for the next rep
