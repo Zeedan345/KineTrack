@@ -2,6 +2,7 @@ import json
 import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import base64 # For debugging image data if needed
+import numpy as np
 
 # Import all your analyzer classes
 from pushup_analyzer import PushupAnalyzer
@@ -49,7 +50,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     pose_name = message.get("pose_name")
                     frame_id = message.get("frame_id")
                     frame = message.get("frame") # This contains the landmark data
-                    frame_data = save_pose_landmarks_json(frame) # Convert to expected format
+                    frame_data = save_pose_landmarks_json(np.frombuffer(base64.b64decode(frame))) # Convert to expected format
                 else:
                     continue
 
