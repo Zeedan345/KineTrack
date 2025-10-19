@@ -94,19 +94,6 @@ def save_pose_landmarks_json(
 
     feats = _calc_features(lms)
 
-    # ---- Optional overlay ----
-    if draw_overlay:
-        vis = bgr.copy()
-        mp_draw.draw_landmarks(
-            vis, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-            mp_draw.DrawingSpec(thickness=2, circle_radius=2),
-            mp_draw.DrawingSpec(thickness=2, circle_radius=2)
-        )
-        if overlay_output_path is None:
-            overlay_output_path = _default_overlay_path(source_path)
-        os.makedirs(os.path.dirname(overlay_output_path) or ".", exist_ok=True)
-        cv2.imwrite(overlay_output_path, vis)
-
     frame = {
         "timestamp": datetime.now().isoformat(),
         "relative_time": time.time() - start_time,

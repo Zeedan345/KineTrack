@@ -14,9 +14,11 @@ class PushupAnalyzer(ExerciseAnalyzer):
         self.min_angle_in_rep = 180
 
         # --- Frame Buffer for State Change ---
-        self.FRAME_BUFFER = 4
+        self.FRAME_BUFFER = 3
         self.up_frames = 0
         self.down_frames = 0
+        self.smoothing_factor = 0.3
+        self.smoothed_elbow_angle = None
 
         # --- Timers for Tempo ---
         self.rep_start_time = 0
@@ -47,6 +49,14 @@ class PushupAnalyzer(ExerciseAnalyzer):
 
             # --- Calculate all relevant angles for this frame ---
             elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
+            if self.smoothed_elbow_angle is None:
+                self.smoothed_elbow_angle = elbow_angle
+            else:
+                # Apply simple exponential smoothing
+                self.smoothed_elbow_angle = (
+                    self.smoothing_factor * elbow_angle +
+                    (1 - self.smoothing_factor) * self.smoothed_elbow_angle
+                )
             body_angle = self.calculate_angle(shoulder, hip, ankle)
             elbow_flare_angle = self.calculate_angle(hip, shoulder, elbow)
 
@@ -64,7 +74,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
                 feedback_this_frame.append("Tuck your elbows in a bit!")
             
             # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
-            if elbow_angle < self.rep_threshold:
+            if self.smoothed_elbow_angle < self.rep_threshold:
                 self.down_frames += 1
                 self.up_frames = 0 # Reset the other counter
             else:

@@ -18,6 +18,8 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.FRAME_BUFFER = 3
         self.up_frames = 0
         self.down_frames = 0
+        self.smoothing_factor = 0.3
+        self.smoothed_avg_knee_angle = None
 
         # --- Form Thresholds (Tunable) ---
         # Rep Counting
@@ -51,13 +53,21 @@ class SquatAnalyzer(ExerciseAnalyzer):
             left_knee_angle = self.calculate_angle(l_hip, l_knee, l_ankle)
             right_knee_angle = self.calculate_angle(r_hip, r_knee, r_ankle)
             avg_knee_angle = (left_knee_angle + right_knee_angle) / 2
+            if self.smoothed_avg_knee_angle is None:
+                self.smoothed_avg_knee_angle = avg_knee_angle
+            else:
+                # Apply simple exponential smoothing
+                self.smoothed_avg_knee_angle = (
+                    self.smoothing_factor * avg_knee_angle +
+                    (1 - self.smoothing_factor) * self.smoothed_avg_knee_angle
+                )
 
             # Use average hip and knee height for depth check
             avg_hip_y = (l_hip[1] + r_hip[1]) / 2
             avg_knee_y = (l_knee[1] + r_knee[1]) / 2
             
             # --- Rep Counting and State Logic with Frame Buffer ---
-            if avg_knee_angle > self.rep_threshold_angle:
+            if self.smoothed_avg_knee_angle > self.rep_threshold_angle:
                 self.up_frames += 1
                 self.down_frames = 0
             else:
