@@ -111,7 +111,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
             return feedback_this_frame
 
         except KeyError as e:
-            return []
+            return [{e}]
         except Exception as e:
             return [f"An error occurred: {e}"]
 
