@@ -10,7 +10,7 @@ import uvicorn
 from dotenv import load_dotenv
 
 # --- Configuration ---
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(dotenv_path=".env")
 
 APP_NAME = "KineTrack AI Coach Backend"
 VERSION = "0.4.0" # Version updated for summary feature
