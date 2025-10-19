@@ -20,14 +20,34 @@ struct HistoryView: View {
         NavigationView {
             List(fetchedRecordings, id: \.self) { recording in
                 NavigationLink(destination: RecordingView(recording: recording)) {
-                    Text("\(recording.exerciseName ?? "N/A") at \(recording.timestamp?.formatted(date: .numeric, time: .omitted) ?? "N/A")")
-                        .font(.headline)
-                        .fontWeight(.regular)
+                    VStack(alignment: .leading) {
+                        Text("\(recording.exerciseName ?? "N/A") at \(recording.timestamp?.formatted(date: .numeric, time: .omitted) ?? "N/A")")
+                            .font(.headline)
+                            .fontWeight(.regular)
+                        Text("Recording ID: \(shortenedUUID(recording.recordingId))")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                        Text("Gemini Feedback")
+                            .font(.caption)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.green.opacity(0.2))
+                            .foregroundColor(.green)
+                            .cornerRadius(6)
+                    }
                 }
             }
             .navigationBarTitle("History")
         }
     }
+    private func shortenedUUID(_ id: UUID?) -> String {
+        guard let id = id else { return "" }
+        let uuidString = id.uuidString
+        // Show only the last 6 characters
+        let shortPart = uuidString.suffix(6)
+        return "…\(shortPart)"
+    }
+
 }
 
 struct RecordingView: View {
@@ -50,7 +70,27 @@ struct RecordingView: View {
                 Text(timestamp.formatted(date: .abbreviated, time: .shortened))
                     .font(.headline)
             }
-            
+            if let feedback = recording.feedback, !feedback.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Gemini Feedback")
+                        .font(.headline)
+                    ScrollView {
+                        Text(.init(feedback))
+                            .font(.body)
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                    }
+                    .frame(maxHeight: 200)
+                }
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemBackground)))
+            } else {
+                ProgressView("Gemini feedback not available")
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemBackground)))
+            }
             Spacer()
         }
         .padding()
