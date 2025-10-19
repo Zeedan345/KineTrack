@@ -43,14 +43,6 @@ def save_pose_landmarks_json(
 
     if bgr is None:
         out = {
-            "metadata": {
-                "mode": "image",
-                "total_images": 1,
-                "duration_seconds": time.time() - start_time,
-                "collection_date": datetime.now().isoformat(),
-                "key_landmarks": list(_KEYS.keys())
-            },
-            "frames": [{
                 "timestamp": datetime.now().isoformat(),
                 "relative_time": time.time() - start_time,
                 "image_id": image_id,
@@ -60,8 +52,7 @@ def save_pose_landmarks_json(
                 "landmarks": {},
                 "calculated_features": {},
                 "message": "Could not decode image."
-            }]
-        }
+            }
         return out
 
     h, w = bgr.shape[:2]
@@ -86,8 +77,7 @@ def save_pose_landmarks_json(
             "calculated_features": {},
             "message": "No pose landmarks detected."
         }
-        out = _wrap_metadata(frame, start_time)
-        return out
+        return frame 
 
     lms = results.pose_landmarks.landmark
 

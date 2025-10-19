@@ -77,9 +77,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         break
                 
                 # --- 4. Process the frame and get feedback ---
-                # feedback_list = analyzer.process_frame(frame_data)
-                feedback_list = ["Good form."] #TODO: Integrate Kevin's code
-                feedback_message = " ".join(feedback_list) if feedback_list else "Good form."
+                feedback_list = analyzer.process_frame(frame_data)
+                feedback_message = " ".join(feedback_list)
 
                 # --- 5. Send the response back to the client ---
                 await websocket.send_json({
