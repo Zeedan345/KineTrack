@@ -9,6 +9,8 @@ import SwiftUI
 import AVKit
 
 struct ResultsView: View {
+    @ObservedObject var model: FrameHandler
+    
     let videoURL: URL
     let position: Position
     let feedback: String?
@@ -17,7 +19,8 @@ struct ResultsView: View {
     @State private var player: AVPlayer
     @State private var isPlaying: Bool = true
     
-    init(videoURL: URL, position: Position, feedback: String?) {
+    init(model: FrameHandler, videoURL: URL, position: Position, feedback: String?) {
+        self.model = model
         self.videoURL = videoURL
         self.position = position
         self.feedback = feedback
@@ -78,12 +81,26 @@ struct ResultsView: View {
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     HStack {
-                        Image(systemName: "camera.fill")
+                        Image(systemName: "x.circle")
                         Text("Retake")
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 20)
                     .background(Color.red.opacity(0.9))
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                Button(action: {
+                    model.saveRecordingWithPosition(url: videoURL, position: position)
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    HStack {
+                        Image(systemName: "camera.fill")
+                        Text("Save")
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 20)
+                    .background(Color.blue.opacity(0.9))
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }

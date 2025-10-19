@@ -291,7 +291,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                    self.saveRecordingWithPosition(url: outputFileURL, position: position)
+                    //self.saveRecordingWithPosition(url: outputFileURL, position: position)
                 }
             }
 
@@ -303,7 +303,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
     }
     
     // Optional: Save recording with position metadata
-    private func saveRecordingWithPosition(url: URL, position: Position) {
+    func saveRecordingWithPosition(url: URL, position: Position) {
         guard let viewContext = self.viewContext else { return }
         
         let newRecording = RecordingEntity(context: viewContext)
