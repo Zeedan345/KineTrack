@@ -29,6 +29,8 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.knee_feedback_given_in_rep = False
         self.knee_caving_threshold_ratio = 0.6  # knee_dist < ankle_dist * this = Caving
         self.knee_splaying_threshold_ratio = 1.8 # knee_dist > ankle_dist * this = Splaying
+        self.good_form_frames = 0
+        self.good_form_bool = False
 
     def process_frame(self, frame_data):
         """
@@ -37,6 +39,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.frame_count += 1
         landmarks = frame_data['landmarks']
         feedback_this_frame = []
+        self.good_form_bool = True
 
         try:
             # --- Get key landmarks for both sides ---
@@ -97,9 +100,11 @@ class SquatAnalyzer(ExerciseAnalyzer):
                         if knee_to_ankle_ratio < self.knee_caving_threshold_ratio:
                             feedback_this_frame.append("Push your knees out!")
                             self.knee_feedback_given_in_rep = True
+                            self.good_form_bool = False
                         elif knee_to_ankle_ratio > self.knee_splaying_threshold_ratio:
                             feedback_this_frame.append("Don't let your knees flare out too wide!")
                             self.knee_feedback_given_in_rep = True
+                            self.good_form_bool = False
 
                 # A rep attempt ends when the user has been 'up' for enough frames
                 if self.up_frames >= self.FRAME_BUFFER:
@@ -109,12 +114,18 @@ class SquatAnalyzer(ExerciseAnalyzer):
                     # FIX: Check if the lowest hip point (max y) went below the knee level (avg_knee_y).
                     if self.max_hip_y_in_rep < avg_knee_y:
                         feedback_this_frame.append("Go deeper!")
+                        self.good_form_bool = False
                     else:
                         # Only count the rep if depth was good
                         self.rep_count += 1
                     
                     # Reset tracker for the next rep
                     self.max_hip_y_in_rep = 0.0
+            if (self.good_form_bool):
+                self.good_form_frames += 1
+                if (self.good_form_frames >= 10):
+                    feedback_this_frame.append("Great form! Keep it up!")
+                    self.good_form_frames = 0
 
             # Add new, unique feedback to the session log
             unique_feedback_in_log = set(self.feedback_log)

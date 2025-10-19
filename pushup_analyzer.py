@@ -29,6 +29,8 @@ class PushupAnalyzer(ExerciseAnalyzer):
         self.body_straight_angle_min = 150    # Angle of shoulder-hip-ankle
         self.elbow_flare_angle_max = 80       # Angle of hip-shoulder-elbow
         self.rep_too_fast_seconds = 1.0
+        self.good_form_frames = 0
+        self.good_form_bool = False
 
     def process_frame(self, frame_data):
         """
@@ -38,6 +40,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
         landmarks = frame_data['landmarks']
         current_time = frame_data['relative_time']
         feedback_this_frame = []
+        self.good_form_bool = True
 
         try:
             # --- Get key landmarks using the helper from the base class ---
@@ -63,6 +66,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
             # --- 1. Body Straightness Check ---
             if body_angle < self.body_straight_angle_min:
                 feedback = "Keep your back straight!"
+                self.good_form_bool = False
                 if self.last_feedback != feedback:
                     feedback_this_frame.append(feedback)
                     self.last_feedback = feedback
@@ -72,6 +76,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
             # --- 2. Elbow Flare Check ---
             if elbow_flare_angle > self.elbow_flare_angle_max:
                 feedback_this_frame.append("Tuck your elbows in a bit!")
+                self.good_form_bool = False
             
             # --- 3. Rep Counting, Depth, and State Logic with Frame Buffer ---
             if self.smoothed_elbow_angle < self.rep_threshold:
@@ -98,6 +103,7 @@ class PushupAnalyzer(ExerciseAnalyzer):
                     # --- 4. Depth Check (at the end of the rep) ---
                     if self.min_angle_in_rep > self.depth_threshold_angle:
                         feedback_this_frame.append("Go deeper on your push-ups!")
+                        self.good_form_bool = False
                     else:
                         # Only count the rep if the depth was good.
                         self.rep_count += 1
@@ -106,12 +112,19 @@ class PushupAnalyzer(ExerciseAnalyzer):
                     rep_duration = current_time - self.rep_start_time
                     if rep_duration < self.rep_too_fast_seconds and self.rep_start_time > 0:
                         feedback_this_frame.append("Slow down your reps!")
+                        self.good_form_bool = False
 
                     # Reset trackers for the next rep
                     self.rep_start_time = 0
                     self.min_angle_in_rep = 180
 
             # Add new, unique feedback to the session log
+            if (self.good_form_bool):
+                self.good_form_frames += 1
+                if (self.good_form_frames >= 10):
+                    feedback_this_frame.append("Great form! Keep it up!")
+                    self.good_form_frames = 0
+            
             unique_feedback_in_log = set(self.feedback_log)
             for item in feedback_this_frame:
                 if item not in unique_feedback_in_log:
