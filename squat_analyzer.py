@@ -18,6 +18,8 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.FRAME_BUFFER = 3
         self.up_frames = 0
         self.down_frames = 0
+        self.smoothing_factor = 0.3
+        self.smoothed_avg_knee_angle = None
 
         # --- Form Thresholds (Tunable) ---
         # Rep Counting
@@ -25,8 +27,11 @@ class SquatAnalyzer(ExerciseAnalyzer):
 
         # Knee Position Checks (relative to ankle distance)
         self.knee_feedback_given_in_rep = False
-        self.knee_caving_threshold_ratio = 0.6  # knee_dist < ankle_dist * this = Caving
-        self.knee_splaying_threshold_ratio = 1.8 # knee_dist > ankle_dist * this = Splaying
+        self.knee_caving_threshold_ratio = 0.8  # knee_dist < ankle_dist * this = Caving
+        self.knee_splaying_threshold_ratio = 1.6 # knee_dist > ankle_dist * this = Splaying
+        self.good_form_frames = 0
+        self.good_form_bool = False
+        self.knee_y_at_max_hip_y = 0.0
 
     def process_frame(self, frame_data):
         """
@@ -35,6 +40,7 @@ class SquatAnalyzer(ExerciseAnalyzer):
         self.frame_count += 1
         landmarks = frame_data['landmarks']
         feedback_this_frame = []
+        self.good_form_bool = True
 
         try:
             # --- Get key landmarks for both sides ---
@@ -51,13 +57,21 @@ class SquatAnalyzer(ExerciseAnalyzer):
             left_knee_angle = self.calculate_angle(l_hip, l_knee, l_ankle)
             right_knee_angle = self.calculate_angle(r_hip, r_knee, r_ankle)
             avg_knee_angle = (left_knee_angle + right_knee_angle) / 2
+            if self.smoothed_avg_knee_angle is None:
+                self.smoothed_avg_knee_angle = avg_knee_angle
+            else:
+                # Apply simple exponential smoothing
+                self.smoothed_avg_knee_angle = (
+                    self.smoothing_factor * avg_knee_angle +
+                    (1 - self.smoothing_factor) * self.smoothed_avg_knee_angle
+                )
 
             # Use average hip and knee height for depth check
             avg_hip_y = (l_hip[1] + r_hip[1]) / 2
             avg_knee_y = (l_knee[1] + r_knee[1]) / 2
             
             # --- Rep Counting and State Logic with Frame Buffer ---
-            if avg_knee_angle > self.rep_threshold_angle:
+            if self.smoothed_avg_knee_angle > self.rep_threshold_angle:
                 self.up_frames += 1
                 self.down_frames = 0
             else:
@@ -74,8 +88,9 @@ class SquatAnalyzer(ExerciseAnalyzer):
             # While in the 'down' phase...
             elif self.stage == 'down':
                 # FIX: Continuously track the lowest hip position (maximum y-value).
-                self.max_hip_y_in_rep = max(self.max_hip_y_in_rep, avg_hip_y)
-
+                if avg_hip_y > self.max_hip_y_in_rep: # If this is a new lowest point
+                    self.max_hip_y_in_rep = avg_hip_y
+                    self.knee_y_at_max_hip_y = avg_knee_y
                 # --- 1. Knee Caving / Splaying Check (performed during descent) ---
                 knee_dist = abs(l_knee[0] - r_knee[0])
                 ankle_dist = abs(l_ankle[0] - r_ankle[0])
@@ -87,9 +102,11 @@ class SquatAnalyzer(ExerciseAnalyzer):
                         if knee_to_ankle_ratio < self.knee_caving_threshold_ratio:
                             feedback_this_frame.append("Push your knees out!")
                             self.knee_feedback_given_in_rep = True
+                            self.good_form_bool = False
                         elif knee_to_ankle_ratio > self.knee_splaying_threshold_ratio:
                             feedback_this_frame.append("Don't let your knees flare out too wide!")
                             self.knee_feedback_given_in_rep = True
+                            self.good_form_bool = False
 
                 # A rep attempt ends when the user has been 'up' for enough frames
                 if self.up_frames >= self.FRAME_BUFFER:
@@ -97,14 +114,21 @@ class SquatAnalyzer(ExerciseAnalyzer):
                     
                     # --- 2. Depth Check (performed at the end of the rep) ---
                     # FIX: Check if the lowest hip point (max y) went below the knee level (avg_knee_y).
-                    if self.max_hip_y_in_rep < avg_knee_y:
+                    if self.max_hip_y_in_rep < self.knee_y_at_max_hip_y:
                         feedback_this_frame.append("Go deeper!")
+                        self.good_form_bool = False
                     else:
                         # Only count the rep if depth was good
                         self.rep_count += 1
                     
                     # Reset tracker for the next rep
                     self.max_hip_y_in_rep = 0.0
+                    self.knee_y_at_max_hip_y = 0.0
+            if (self.good_form_bool):
+                self.good_form_frames += 1
+                if (self.good_form_frames >= 10):
+                    feedback_this_frame.append("Great form! Keep it up!")
+                    self.good_form_frames = 0
 
             # Add new, unique feedback to the session log
             unique_feedback_in_log = set(self.feedback_log)
