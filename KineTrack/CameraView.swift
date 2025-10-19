@@ -85,18 +85,18 @@ struct CameraView: View {
                         if !model.isRecording {
                             HStack() {
                                 HStack {
-                                    Button {
-                                        if selectedPosition == nil {
-                                            showErrorAlert = true
-                                        } else {
-                                            showVideoPicker = true
-                                        }
-                                    } label: {
-                                        Image(systemName: "film")
-                                            .resizable().frame(width: 26, height: 26)
-                                            .foregroundColor(.white)
-                                    }
-                                    .padding()
+//                                    Button {
+//                                        if selectedPosition == nil {
+//                                            showErrorAlert = true
+//                                        } else {
+//                                            showVideoPicker = true
+//                                        }
+//                                    } label: {
+//                                        Image(systemName: "film")
+//                                            .resizable().frame(width: 26, height: 26)
+//                                            .foregroundColor(.white)
+//                                    }
+//                                    .padding()
                                     
                                     Button {
                                         isShowingPositionPicker.toggle()

@@ -79,7 +79,11 @@ class WebSocketManager: NSObject {
                     if let data = text.data(using: .utf8),
                        let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                        let message = json["message"] as? String {
-                        KineSpeaker.shared.speak(message)
+                        if message == "Invalid JSON format." {
+                            KineSpeaker.shared.speak("Ready when you are")
+                        } else {
+                            KineSpeaker.shared.speak(message)
+                        }
                     }
                 case .data(let data):
                     print("Received data")
