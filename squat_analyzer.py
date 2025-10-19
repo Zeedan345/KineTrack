@@ -25,8 +25,8 @@ class SquatAnalyzer(ExerciseAnalyzer):
 
         # Knee Position Checks (relative to ankle distance)
         self.knee_feedback_given_in_rep = False
-        self.knee_caving_threshold_ratio = 0.8  # knee_dist < ankle_dist * this = Caving
-        self.knee_splaying_threshold_ratio = 1.6 # knee_dist > ankle_dist * this = Splaying
+        self.knee_caving_threshold_ratio = 0.6  # knee_dist < ankle_dist * this = Caving
+        self.knee_splaying_threshold_ratio = 1.8 # knee_dist > ankle_dist * this = Splaying
 
     def process_frame(self, frame_data):
         """
