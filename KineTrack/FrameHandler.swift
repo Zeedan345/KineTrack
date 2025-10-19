@@ -281,19 +281,17 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
             print("Recording completed for position")
             print("Video saved at: \(outputFileURL)")
             
-//            if let position = self.currentRecordingPosition {
-//                sendPromptWithVideo(position: position.name, videoURL: outputFileURL) {result in
-//                    switch result {
-//                    case .success(let data):
-//                        if let json = try? JSONSerialization.jsonObject(with: data) {
-//                            print("Response: \(json)")
-//                        }
-//                    case .failure(let error):
-//                        print("Error: \(error)")
-//                    }
-//                    self.saveRecordingWithPosition(url: outputFileURL, position: position)
-//                }
-//            }
+            if let position = self.currentRecordingPosition {
+                sendPromptWithVideo(position: position.name, videoURL: outputFileURL) {result in
+                    switch result {
+                    case .success(let text):
+                        print("Response: \(text)")
+                    case .failure(let error):
+                        print("Error: \(error)")
+                    }
+                    self.saveRecordingWithPosition(url: outputFileURL, position: position)
+                }
+            }
 
         }
         
@@ -327,7 +325,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         guard let jpegData = uiImage.jpegData(compressionQuality: 0.7) else { return }
         
         if frameCount % 15 == 0 && isRecording == true {
-            webSocketController?.sendPoseFrame(poseName: "squats", frameID: frameCount, image: uiImage)
+            //webSocketController?.sendPoseFrame(poseName: "squats", frameID: frameCount, image: uiImage)
         }
     }
 }

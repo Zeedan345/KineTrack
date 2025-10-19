@@ -178,13 +178,13 @@ struct CameraView: View {
 //                let vc = ViewController()
 //                viewController = vc
 //                model.webSocketController = vc
-                let socket = WebSocketManager()
-                model.webSocketController = socket
-                model.webSocketController?.connect()
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    model.webSocketController!.sendPing()
-                }
+//                let socket = WebSocketManager()
+//                model.webSocketController = socket
+//                model.webSocketController?.connect()
+//
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//                    model.webSocketController!.sendPing()
+//                }
 
             }
             .onDisappear {
