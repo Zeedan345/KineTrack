@@ -9,7 +9,10 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \RecordingEntity.timestamp, ascending: false)],
+        animation: .default)
+    private var fetchedRecordings: FetchedResults<RecordingEntity>
     
     @Binding var selectedTab: Int
     @AppStorage("syncEnabled") private var syncEnabled = true
@@ -53,15 +56,19 @@ struct HomeView: View {
                         Text("Recent Sessions")
                             .font(.headline)
                         
-                        if true {
+                        if fetchedRecordings.isEmpty {
                             Text("No recordings yet.")
                                 .foregroundColor(.gray)
                         } else {
                             ScrollView {
                                 LazyVStack(alignment: .leading, spacing: 8) {
-//                                    ForEach(allRecordings.prefix(20)) { recording in
-//                                        RecentRecordingsView(recording: recording)
-//                                    }
+                                    ForEach(fetchedRecordings.prefix(20)) { recording in
+                                        VStack(alignment: .leading) {
+                                            Text("\(recording.exerciseName ?? "N/A") at \(recording.timestamp?.formatted(date: .numeric, time: .omitted) ?? "N/A")")
+                                                .font(.subheadline)
+                                            Divider()
+                                        }
+                                    }
                                 }
                             }
                             .frame(height: 200)

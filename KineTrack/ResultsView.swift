@@ -45,7 +45,7 @@ struct ResultsView: View {
                     Text("Gemini Feedback")
                         .font(.headline)
                     ScrollView {
-                        Text(feedback)
+                        Text(.init(feedback))
                             .font(.body)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,11 +54,13 @@ struct ResultsView: View {
                     }
                     .frame(maxHeight: 200)
                 }
-                .padding(.horizontal)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemBackground)))
             } else {
                 ProgressView("Awaiting Gemini feedback...")
                     .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                     .padding()
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemBackground)))
             }
             
             Spacer()

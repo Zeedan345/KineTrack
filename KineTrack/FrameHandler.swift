@@ -311,6 +311,7 @@ class FrameHandler: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBu
         newRecording.timestamp = Date()
         newRecording.url = url.path
         newRecording.exerciseName = position.name
+        newRecording.feedback = aiFeedback
         
         try? viewContext.save()
     }
